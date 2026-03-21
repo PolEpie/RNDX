@@ -158,6 +158,7 @@ local SHAPES = {
 	[SHAPE_IOS] = 4,
 }
 local DEFAULT_SHAPE = SHAPE_FIGMA
+local DEFAULT_BLUR_INTENSITY = 1.0
 
 local MATERIAL_SetTexture = ROUNDED_MAT.SetTexture
 local MATERIAL_SetMatrix = ROUNDED_MAT.SetMatrix
@@ -179,7 +180,7 @@ local function RESET_PARAMS()
 	X, Y, W, H = 0, 0, 0, 0
 	TL, TR, BL, BR = 0, 0, 0, 0
 	TEXTURE = nil
-	USING_BLUR, BLUR_INTENSITY = false, 1.0
+	USING_BLUR, BLUR_INTENSITY = false, DEFAULT_BLUR_INTENSITY
 	COL_R, COL_G, COL_B, COL_A = 255, 255, 255, 255
 	SHAPE, OUTLINE_THICKNESS = SHAPES[DEFAULT_SHAPE], -1
 	START_ANGLE, END_ANGLE, ROTATION = 0, 360, 0
@@ -484,7 +485,7 @@ local BASE_FUNCS; BASE_FUNCS = {
 	end,
 	Blur = function(self, intensity)
 		if not intensity then
-			intensity = 1.0
+			intensity = DEFAULT_BLUR_INTENSITY
 		end
 		intensity = math_max(intensity, 0)
 		USING_BLUR, BLUR_INTENSITY = true, intensity
@@ -686,6 +687,14 @@ end
 function RNDX.SetDefaultShape(shape)
 	DEFAULT_SHAPE = shape or SHAPE_FIGMA
 	DEFAULT_DRAW_FLAGS = DEFAULT_SHAPE
+end
+
+function RNDX.SetDefaultBlurIntensity(val)
+    DEFAULT_BLUR_INTENSITY = math_max(0, tonumber(val) or 1.0)
+end
+
+function RNDX.GetDefaultBlurIntensity()
+    return DEFAULT_BLUR_INTENSITY
 end
 
 return RNDX
