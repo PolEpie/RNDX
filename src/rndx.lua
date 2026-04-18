@@ -234,33 +234,39 @@ end
 
 local normalize_corner_radii; do
 	local HUGE = math.huge
+	local math_abs = math.abs
 
+	-- Sign-preserving normalize. Negative values mean "inverse / concave corner"
+	-- and the shader subtracts a circle of |radius| at that corner.
 	local function nzr(x)
-		if x ~= x or x < 0 then return 0 end
+		if x ~= x then return 0 end -- NaN
 		local lim = math_min(W, H)
 		if x == HUGE then return lim end
+		if x == -HUGE then return -lim end
 		return x
 	end
 
-	local function clamp0(x) return x < 0 and 0 or x end
-
 	function normalize_corner_radii()
-		local TL, TR, BL, BR = nzr(TL), nzr(TR), nzr(BL), nzr(BR)
+		local tl, tr, bl, br = nzr(TL), nzr(TR), nzr(BL), nzr(BR)
 
+		-- The "no two adjacent corner radii sum past the side length" constraint
+		-- still applies whether the corner is convex or concave (an over-large
+		-- bite would chew past its neighbour), so we measure with absolutes.
+		local atl, atr, abl, abr = math_abs(tl), math_abs(tr), math_abs(bl), math_abs(br)
 		local k = math_max(
 			1,
-			(TL + TR) / W,
-			(BL + BR) / W,
-			(TL + BL) / H,
-			(TR + BR) / H
+			(atl + atr) / W,
+			(abl + abr) / W,
+			(atl + abl) / H,
+			(atr + abr) / H
 		)
 
 		if k > 1 then
 			local inv = 1 / k
-			TL, TR, BL, BR = TL * inv, TR * inv, BL * inv, BR * inv
+			tl, tr, bl, br = tl * inv, tr * inv, bl * inv, br * inv
 		end
 
-		return clamp0(TL), clamp0(TR), clamp0(BL), clamp0(BR)
+		return tl, tr, bl, br
 	end
 end
 
