@@ -30,21 +30,10 @@ jobs:
 
       - name: Release (master)
         if: github.ref == 'refs/heads/master'
-        uses: ncipollo/release-action@v1
+        uses: polepie/release-action@v1
         with:
           tag: ${{ steps.time.outputs.timestamp }}
           name: "RNDX ${{ steps.time.outputs.timestamp }}"
           allowUpdates: true
           artifacts: C:\rndx.lua
           makeLatest: true
-
-      - name: Release (gmod-colors)
-        if: github.ref == 'refs/heads/gmod-colors'
-        uses: ncipollo/release-action@v1
-        with:
-          tag: gmod-colors-${{ steps.time.outputs.timestamp }}
-          name: "RNDX (gmod-colors) ${{ steps.time.outputs.timestamp }}"
-          allowUpdates: true
-          artifacts: C:\rndx.lua
-          prerelease: true
-          makeLatest: false
