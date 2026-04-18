@@ -30,7 +30,7 @@ jobs:
 
       - name: Release (master)
         if: github.ref == 'refs/heads/master'
-        uses: polepie/release-action@v1
+        uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.time.outputs.timestamp }}
           name: "RNDX ${{ steps.time.outputs.timestamp }}"
