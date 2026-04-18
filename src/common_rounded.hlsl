@@ -99,7 +99,12 @@ float2 rotate_point(float2 p) {
     return float2(p.x * c - p.y * s, p.x * s + p.y * c);
 }
 
-float rounded_box_sdf(float2 p, float2 b, float4 r) {
+// `bite_origin` is the (per-quadrant absolute) position the concave bite circle
+// is centered on. For a normal draw it equals `b` (the box half-size, i.e. the
+// box's outer corner). During the outline's inner pass `b` is shrunk by the
+// outline thickness, but `bite_origin` must stay anchored to the *original*
+// corner so the eroded bite arc is concentric with the outer one.
+float rounded_box_sdf_ex(float2 p, float2 b, float4 r, float2 bite_origin) {
     float2 quadrant = step(0.0, p.xy);
     float radius = lerp(
         lerp(r.w, r.x, quadrant.y),
@@ -108,13 +113,13 @@ float rounded_box_sdf(float2 p, float2 b, float4 r) {
     );
 
     // Negative radius => inverse / concave corner.
-    // Subtract a circle of |radius| centered at the box corner from a sharp box.
+    // Sharp box minus a circle of |radius| centered at `bite_origin`.
     if (radius < 0.0) {
         float2 d_sharp = abs(p) - b;
         float box_dist = min(max(d_sharp.x, d_sharp.y), 0.0) + length(max(d_sharp, 0.0));
 
-        // Distance from p to its quadrant's corner (clamped so we don't pow() negatives).
-        float2 to_corner = max(b - abs(p), 0.0);
+        // Distance from p to the bite center (clamped so we never pow() negatives).
+        float2 to_corner = max(bite_origin - abs(p), 0.0);
         float circle_dist = length(to_corner) - (-radius);
 
         // CSG subtraction: shape minus circle.
@@ -125,6 +130,10 @@ float rounded_box_sdf(float2 p, float2 b, float4 r) {
     float2 q_clamped = max(q, 0.0);
     float len = length_custom(q_clamped);
     return min(max(q.x, q.y), 0.0) + len - radius;
+}
+
+float rounded_box_sdf(float2 p, float2 b, float4 r) {
+    return rounded_box_sdf_ex(p, b, r, b);
 }
 
 // Shrink the radius vector for an inset/outline pass.
@@ -189,7 +198,7 @@ float calculate_rounded_alpha(PS_INPUT i) {
     float2 inner_half_size = max(rect_half_size - OUTLINE_THICKNESS, 0.0);
     float4 inner_radius = inset_radius(RADIUS, OUTLINE_THICKNESS);
 
-    float dist_inner = rounded_box_sdf(centered_pos, inner_half_size, inner_radius);
+    float dist_inner = rounded_box_sdf_ex(centered_pos, inner_half_size, inner_radius, rect_half_size);
     float aa_inner = blended_AA(dist_inner, screen_pos);
     return aa_outer * (1.0 - aa_inner);
 }
@@ -211,7 +220,7 @@ float calculate_smooth_rounded_alpha(PS_INPUT i) {
     // Adjust inner radii and size for outline
     float2 inner_half_size = max(rect_half_size - OUTLINE_THICKNESS, 0.0);
     float4 inner_radius = inset_radius(RADIUS, OUTLINE_THICKNESS);
-    float dist_inner = rounded_box_sdf(centered_pos, inner_half_size, inner_radius);
+    float dist_inner = rounded_box_sdf_ex(centered_pos, inner_half_size, inner_radius, rect_half_size);
 
     float aa_inner = 1.0 - smoothstep(0.0, AA, dist_inner + AA);
     return aa_outer * (1.0 - aa_inner);
