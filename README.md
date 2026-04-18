@@ -11,6 +11,7 @@ Using Shader Model 3.0, RNDX provides near-perfect anti-aliasing with no perform
 
 ---
 
+
 ## ✨ Why RNDX?
 
 - **Blazing Fast Performance**: Optimized for speed, RNDX is incredibly lightweight and efficient. _(It will get even faster once we [get `mat:SetFloat4()`](https://github.com/Facepunch/garrysmod-requests/issues/2606)!)_
